@@ -16,10 +16,9 @@
 #include "annoy/src/annoylib.h"
 #include "annoy/src/kissrandom.h"
 
-#include "common/Exception.h"
-#include "index/vector_index/VecIndex.h"
+#include "knowhere/common/Exception.h"
+#include "knowhere/index/vector_index/VecIndex.h"
 
-namespace milvus {
 namespace knowhere {
 
 class IndexAnnoy : public VecIndex {
@@ -65,4 +64,3 @@ class IndexAnnoy : public VecIndex {
 };
 
 }  // namespace knowhere
-}  // namespace milvus

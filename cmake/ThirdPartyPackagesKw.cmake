@@ -165,7 +165,7 @@ if (DEFINED ENV{KNOWHERE_OPENBLAS_URL})
     set(OPENBLAS_SOURCE_URL "$ENV{KNOWHERE_OPENBLAS_URL}")
 else ()
     set(OPENBLAS_SOURCE_URL
-            "https://github.com.cnpmjs.org/xianyi/OpenBLAS/archive/v${OPENBLAS_VERSION}.tar.gz")
+            "https://github.com/xianyi/OpenBLAS/archive/refs/tags/v${OPENBLAS_VERSION}.tar.gz")
 endif ()
 
 # ----------------------------------------------------------------------
@@ -176,6 +176,8 @@ macro(build_openblas)
 
     set(OPENBLAS_CMAKE_ARGS
             ${EP_COMMON_CMAKE_ARGS}
+            -DVERSION=${OPENBLAS_VERSION}
+            -DCMAKE_INSTALL_PREFIX=${KNOWHERE_INSTALL_PREFIX}
             -DCMAKE_BUILD_TYPE=Release
             -DBUILD_SHARED_LIBS=ON
             -DBUILD_STATIC_LIBS=ON
@@ -189,18 +191,16 @@ macro(build_openblas)
             -DINTERFACE64=0
             -DNUM_THREADS=128
             -DNO_LAPACKE=0
-            "-DVERSION=${OPENBLAS_VERSION}"
-            "-DCMAKE_INSTALL_PREFIX=${KNOWHERE_INSTALL_PREFIX}"
             )
 
     externalproject_add(openblas_ep
-            URL ${OPENBLAS_SOURCE_URL}
-            URL_MD5 "28cc19a6acbf636f5aab5f10b9a0dfe1"
-            CMAKE_ARGS ${OPENBLAS_CMAKE_ARGS}
-            BUILD_COMMAND ${MAKE} ${MAKE_BUILD_ARGS}
-            PREFIX              ${CMAKE_BINARY_DIR}/3rdparty_download/openblas-subbuild
-            BINARY_DIR          openblas-bin
-            INSTALL_DIR         ${KNOWHERE_INSTALL_PREFIX}
+            URL             ${OPENBLAS_SOURCE_URL}
+            URL_MD5         "4727a1333a380b67c8d7c7787a3d9c9a"
+            CMAKE_ARGS      ${OPENBLAS_CMAKE_ARGS}
+            BUILD_COMMAND   ${MAKE} ${MAKE_BUILD_ARGS}
+            PREFIX          ${CMAKE_BINARY_DIR}/3rdparty_download/openblas-subbuild
+            BINARY_DIR      openblas-bin
+            INSTALL_DIR     ${KNOWHERE_INSTALL_PREFIX}
             )
 
     ExternalProject_Get_Property(openblas_ep INSTALL_DIR)
@@ -208,7 +208,6 @@ macro(build_openblas)
     if( NOT IS_DIRECTORY ${INSTALL_DIR}/include )
         file( MAKE_DIRECTORY "${INSTALL_DIR}/include" )
     endif()
-
 
     add_library(openblas SHARED IMPORTED)
     set_target_properties( openblas
@@ -222,7 +221,6 @@ endmacro()
 
 if (KNOWHERE_WITH_OPENBLAS)
     if (OpenBLAS_SOURCE STREQUAL "AUTO")
-        set (BLA_VENDOR OpenBLAS)
         find_package(BLAS)
 
         message(STATUS "Knowhere openblas libraries: ${BLAS_LIBRARIES}")

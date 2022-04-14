@@ -15,10 +15,9 @@
 #include <mutex>
 #include <utility>
 
-#include "common/Exception.h"
-#include "index/vector_index/IndexRHNSW.h"
+#include "knowhere/common/Exception.h"
+#include "knowhere/index/vector_index/IndexRHNSW.h"
 
-namespace milvus {
 namespace knowhere {
 
 class IndexRHNSWPQ : public IndexRHNSW {
@@ -49,4 +48,3 @@ class IndexRHNSWPQ : public IndexRHNSW {
 };
 
 }  // namespace knowhere
-}  // namespace milvus

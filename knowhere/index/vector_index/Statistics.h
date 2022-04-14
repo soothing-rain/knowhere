@@ -20,11 +20,10 @@
 #include <utility>
 #include <vector>
 
-#include "common/Log.h"
-#include "index/IndexType.h"
-#include "utils/BitsetView.h"
+#include "knowhere/common/Log.h"
+#include "knowhere/index/IndexType.h"
+#include "knowhere/utils/BitsetView.h"
 
-namespace milvus {
 namespace knowhere {
 
 extern int32_t STATISTICS_LEVEL;
@@ -148,7 +147,7 @@ class Statistics {
 
     void
     update_filter_percentage(const faiss::BitsetView bitset) {
-        double fps = !bitset.empty() ? static_cast<double>(bitset.count_1()) / bitset.size() : 0.0;
+        double fps = !bitset.empty() ? static_cast<double>(bitset.count()) / bitset.size() : 0.0;
         filter_stat[static_cast<int>(fps * 100) / 5] += 1;
     }
 
@@ -374,4 +373,3 @@ class IVFStatistics : public Statistics {
 };
 
 }  // namespace knowhere
-}  // namespace milvus

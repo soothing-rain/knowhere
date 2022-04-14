@@ -13,10 +13,9 @@
 
 #include <string>
 
-#include "common/Dataset.h"
-#include "index/vector_index/helpers/IndexParameter.h"
+#include "knowhere/common/Dataset.h"
+#include "knowhere/index/vector_index/helpers/IndexParameter.h"
 
-namespace milvus {
 namespace knowhere {
 
 #define GET_TENSOR_DATA(dataset_ptr)                      \
@@ -31,4 +30,3 @@ extern DatasetPtr
 GenDataset(const int64_t nb, const int64_t dim, const void* xb);
 
 }  // namespace knowhere
-}  // namespace milvus

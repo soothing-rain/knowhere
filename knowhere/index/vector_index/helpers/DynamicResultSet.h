@@ -15,9 +15,8 @@
 #include <string>
 #include <vector>
 #include "faiss/impl/AuxIndexStructures.h"
-#include "common/Typedef.h"
+#include "knowhere/common/Typedef.h"
 
-namespace milvus {
 namespace knowhere {
 
 enum class ResultSetPostProcessType { None = 0, SortDesc, SortAsc };
@@ -82,4 +81,3 @@ void
 ExchangeDataset(DynamicResultSegment& milvus_dataset, std::vector<faiss::RangeSearchPartialResult*>& faiss_dataset);
 
 }  // namespace knowhere
-}  // namespace milvus

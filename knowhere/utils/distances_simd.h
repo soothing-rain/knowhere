@@ -5,70 +5,74 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// -*- c++ -*-
-
 #pragma once
 
 #include <stdint.h>
 
 namespace faiss {
 
- /*********************************************************
+/*********************************************************
  * Optimized distance/norm/inner prod computations
  *********************************************************/
+extern uint8_t lookup8bit[256];
 
-float fvec_L2sqr_ref (
-        const float * x,
-        const float * y,
+/// Squared L2 distance between two vectors
+float fvec_L2sqr_ref(
+        const float* x,
+        const float* y,
         size_t d);
 
-float fvec_inner_product_ref (
-        const float * x,
-        const float * y,
+/// inner product
+float fvec_inner_product_ref(
+        const float* x,
+        const float* y,
         size_t d);
 
-float fvec_L1_ref (
-        const float * x,
-        const float * y,
+/// L1 distance
+float fvec_L1_ref(
+        const float* x,
+        const float* y,
         size_t d);
 
-float fvec_Linf_ref (
-        const float * x,
-        const float * y,
+/// infinity distance
+float fvec_Linf_ref(
+        const float* x,
+        const float* y,
         size_t d);
 
-#ifdef __SSE__
-float fvec_L2sqr_sse (
-        const float * x,
-        const float * y,
+/// squared norm of a vector
+float fvec_norm_L2sqr_ref(
+        const float* x,
         size_t d);
 
-float  fvec_inner_product_sse (
-        const float * x,
-        const float * y,
-        size_t d);
+/// compute ny square L2 distance between x and a set of contiguous y vectors
+void fvec_L2sqr_ny_ref(
+        float* dis,
+        const float* x,
+        const float* y,
+        size_t d,
+        size_t ny);
 
-float fvec_L1_sse (
-        const float * x,
-        const float * y,
-        size_t d);
+/// compute the inner product between nx vectors x and one y
+void fvec_inner_products_ny_ref(
+        float* ip,
+        const float* x,
+        const float* y,
+        size_t d,
+        size_t ny);
 
-float fvec_Linf_sse (
-        const float * x,
-        const float * y,
-        size_t d);
-#endif
+void fvec_madd_ref(
+        size_t n,
+        const float* a,
+        float bf,
+        const float* b,
+        float* c);
 
-/* compute ny square L2 distance bewteen x and a set of contiguous y vectors */
-void fvec_L2sqr_ny (
-        float * dis,
-        const float * x,
-        const float * y,
-        size_t d, size_t ny);
-
-
-/** squared norm of a vector */
-float fvec_norm_L2sqr (const float * x,
-                       size_t d);
+int fvec_madd_and_argmin_ref(
+        size_t n,
+        const float* a,
+        float bf,
+        const float* b,
+        float* c);
 
 } // namespace faiss

@@ -18,23 +18,22 @@
 
 #include <faiss/IndexIVF.h>
 
-#include "common/Typedef.h"
-#include "index/vector_index/VecIndex.h"
-#include "index/vector_offset_index/OffsetBaseIndex.h"
+#include "knowhere/common/Typedef.h"
+#include "knowhere/index/vector_index/VecIndex.h"
+#include "knowhere/index/vector_offset_index/OffsetBaseIndex.h"
 
-namespace milvus {
 namespace knowhere {
 
 class IVF_NM : public VecIndex, public OffsetBaseIndex {
  public:
     IVF_NM() : OffsetBaseIndex(nullptr) {
         index_type_ = IndexEnum::INDEX_FAISS_IVFFLAT;
-        stats = std::make_shared<milvus::knowhere::IVFStatistics>(index_type_);
+        stats = std::make_shared<IVFStatistics>(index_type_);
     }
 
     explicit IVF_NM(std::shared_ptr<faiss::Index> index) : OffsetBaseIndex(std::move(index)) {
         index_type_ = IndexEnum::INDEX_FAISS_IVFFLAT;
-        stats = std::make_shared<milvus::knowhere::IVFStatistics>(index_type_);
+        stats = std::make_shared<IVFStatistics>(index_type_);
     }
 
     BinarySet
@@ -66,11 +65,13 @@ class IVF_NM : public VecIndex, public OffsetBaseIndex {
     void
     UpdateIndexSize() override;
 
+#if 0
     StatisticsPtr
     GetStatistics() override;
 
     void
     ClearStatistics() override;
+#endif
 
 #if 0
     DatasetPtr
@@ -110,4 +111,3 @@ class IVF_NM : public VecIndex, public OffsetBaseIndex {
 using IVFNMPtr = std::shared_ptr<IVF_NM>;
 
 }  // namespace knowhere
-}  // namespace milvus

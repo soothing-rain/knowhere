@@ -15,11 +15,10 @@
 #include <utility>
 #include <vector>
 
-#include "index/vector_index/FaissBaseBinaryIndex.h"
-#include "index/vector_index/VecIndex.h"
-#include "index/vector_index/helpers/DynamicResultSet.h"
+#include "knowhere/index/vector_index/FaissBaseBinaryIndex.h"
+#include "knowhere/index/vector_index/VecIndex.h"
+#include "knowhere/index/vector_index/helpers/DynamicResultSet.h"
 
-namespace milvus {
 namespace knowhere {
 
 class BinaryIDMAP : public VecIndex, public FaissBaseBinaryIndex {
@@ -78,4 +77,3 @@ class BinaryIDMAP : public VecIndex, public FaissBaseBinaryIndex {
 using BinaryIDMAPPtr = std::shared_ptr<BinaryIDMAP>;
 
 }  // namespace knowhere
-}  // namespace milvus

@@ -16,7 +16,6 @@
 
 #include "knowhere/common/Log.h"
 
-namespace milvus {
 namespace knowhere {
 
 std::string
@@ -35,11 +34,11 @@ LogOut(const char* pattern, ...) {
 
 void
 SetThreadName(const std::string& name) {
-    #ifdef __APPLE__
-        pthread_setname_np(name.c_str());
-    #elif __linux__
-        pthread_setname_np(pthread_self(), name.c_str());
-    #endif
+#ifdef __APPLE__
+    pthread_setname_np(name.c_str());
+#elif defined(__linux__) || defined(__MINGW64__)
+    pthread_setname_np(pthread_self(), name.c_str());
+#endif
 }
 
 std::string
@@ -86,4 +85,3 @@ log_fatal_(const std::string& s) {
 }
 
 }  // namespace knowhere
-}  // namespace milvus

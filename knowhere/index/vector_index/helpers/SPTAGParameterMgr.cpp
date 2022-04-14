@@ -11,7 +11,6 @@
 
 #include "knowhere/index/vector_index/helpers/SPTAGParameterMgr.h"
 
-namespace milvus {
 namespace knowhere {
 
 const Config&
@@ -22,6 +21,12 @@ SPTAGParameterMgr::GetKDTParameters() {
 const Config&
 SPTAGParameterMgr::GetBKTParameters() {
     return bkt_config_;
+}
+
+SPTAGParameterMgr&
+SPTAGParameterMgr::GetInstance() {
+    static SPTAGParameterMgr instance;
+    return instance;
 }
 
 SPTAGParameterMgr::SPTAGParameterMgr() {
@@ -64,4 +69,3 @@ SPTAGParameterMgr::SPTAGParameterMgr() {
 }
 
 }  // namespace knowhere
-}  // namespace milvus

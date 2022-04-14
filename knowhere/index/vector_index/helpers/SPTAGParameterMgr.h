@@ -17,10 +17,9 @@
 #include <vector>
 
 #include <SPTAG/AnnService/inc/Core/Common.h>
-#include "IndexParameter.h"
 #include "knowhere/common/Config.h"
+#include "knowhere/index/vector_index/helpers/IndexParameter.h"
 
-namespace milvus {
 namespace knowhere {
 
 class SPTAGParameterMgr {
@@ -33,10 +32,7 @@ class SPTAGParameterMgr {
 
  public:
     static SPTAGParameterMgr&
-    GetInstance() {
-        static SPTAGParameterMgr instance;
-        return instance;
-    }
+    GetInstance();
 
     SPTAGParameterMgr(const SPTAGParameterMgr&) = delete;
 
@@ -52,4 +48,3 @@ class SPTAGParameterMgr {
 };
 
 }  // namespace knowhere
-}  // namespace milvus

@@ -13,10 +13,9 @@
 
 #include <memory>
 
-#include "index/IndexType.h"
-#include "index/vector_index/VecIndex.h"
+#include "knowhere/index/IndexType.h"
+#include "knowhere/index/vector_index/VecIndex.h"
 
-namespace milvus {
 namespace knowhere {
 
 class VecIndexFactory {
@@ -33,9 +32,8 @@ class VecIndexFactory {
         return inst;
     }
 
-    knowhere::VecIndexPtr
+    VecIndexPtr
     CreateVecIndex(const IndexType& type, const IndexMode mode = IndexMode::MODE_CPU);
 };
 
 }  // namespace knowhere
-}  // namespace milvus

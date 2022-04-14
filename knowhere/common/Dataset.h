@@ -17,9 +17,9 @@
 #include <mutex>
 #include <string>
 #include <utility>
-#include "index/vector_index/helpers/IndexParameter.h"
 
-namespace milvus {
+#include "knowhere/index/vector_index/helpers/IndexParameter.h"
+
 namespace knowhere {
 
 using Value = std::any;
@@ -31,12 +31,12 @@ class Dataset {
     ~Dataset() {
         for (auto const& d : data_) {
             if (d.first == meta::IDS) {
-                auto row_data = Get<int64_t*>(milvus::knowhere::meta::IDS);
+                auto row_data = Get<int64_t*>(meta::IDS);
                 // the space of ids must be allocated through malloc
                 free(row_data);
             }
             if (d.first == meta::DISTANCE) {
-                auto row_data = Get<float*>(milvus::knowhere::meta::DISTANCE);
+                auto row_data = Get<float*>(meta::DISTANCE);
                 // the space of distance must be allocated through malloc
                 free(row_data);
             }
@@ -72,4 +72,3 @@ class Dataset {
 using DatasetPtr = std::shared_ptr<Dataset>;
 
 }  // namespace knowhere
-}  // namespace milvus

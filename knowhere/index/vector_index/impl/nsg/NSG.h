@@ -17,15 +17,12 @@
 #include <string>
 #include <vector>
 
-#include "common/Config.h"
-#include "index/vector_index/helpers/IndexParameter.h"
-#include "index/vector_index/impl/nsg/Distance.h"
-#include "index/vector_index/impl/nsg/Neighbor.h"
-#include "utils/BitsetView.h"
+#include "knowhere/index/vector_index/helpers/IndexParameter.h"
+#include "knowhere/index/vector_index/impl/nsg/Distance.h"
+#include "knowhere/index/vector_index/impl/nsg/Neighbor.h"
+#include "knowhere/utils/BitsetView.h"
 
-namespace milvus {
-namespace knowhere {
-namespace impl {
+namespace knowhere::impl {
 
 using node_t = int64_t;
 
@@ -165,6 +162,4 @@ class NsgIndex {
     FindUnconnectedNode(float* data, boost::dynamic_bitset<>& flags, int64_t& root);
 };
 
-}  // namespace impl
-}  // namespace knowhere
-}  // namespace milvus
+}  // namespace knowhere::impl

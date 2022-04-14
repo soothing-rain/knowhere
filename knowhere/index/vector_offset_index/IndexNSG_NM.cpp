@@ -26,7 +26,6 @@
 #include "index/vector_index/helpers/Cloner.h"
 #endif
 
-namespace milvus {
 namespace knowhere {
 
 BinarySet
@@ -44,9 +43,7 @@ NSG_NM::Serialize(const Config& config) {
 
         BinarySet res_set;
         res_set.Append("NSG_NM", data, writer.rp);
-        if (config.contains(INDEX_FILE_SLICE_SIZE_IN_MEGABYTE)) {
-            Disassemble(config[INDEX_FILE_SLICE_SIZE_IN_MEGABYTE].get<int64_t>() * 1024 * 1024, res_set);
-        }
+        Disassemble(res_set, config);
         return res_set;
     } catch (std::exception& e) {
         KNOWHERE_THROW_MSG(e.what());
@@ -113,7 +110,7 @@ NSG_NM::BuildAll(const DatasetPtr& dataset_ptr, const Config& config) {
     const float* raw_data = idmap->GetRawVectors();
     auto k = config[IndexParams::knng].get<int64_t>();
 #ifdef KNOWHERE_GPU_VERSION
-    const auto device_id = config[knowhere::meta::DEVICEID].get<int64_t>();
+    const auto device_id = config[meta::DEVICEID].get<int64_t>();
     if (device_id == -1) {
         auto preprocess_index = std::make_shared<IVF>();
         preprocess_index->Train(dataset_ptr, config);
@@ -181,4 +178,3 @@ NSG_NM::UpdateIndexSize() {
 }
 
 }  // namespace knowhere
-}  // namespace milvus

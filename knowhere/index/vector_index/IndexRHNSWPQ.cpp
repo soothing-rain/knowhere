@@ -21,7 +21,6 @@
 #include "index/vector_index/adapter/VectorAdapter.h"
 #include "index/vector_index/helpers/FaissIO.h"
 
-namespace milvus {
 namespace knowhere {
 
 IndexRHNSWPQ::IndexRHNSWPQ(int d, int pq_m, int M) {
@@ -46,9 +45,7 @@ IndexRHNSWPQ::Serialize(const Config& config) {
         std::shared_ptr<uint8_t[]> data(writer.data_);
 
         res_set.Append(writer.name, data, writer.rp);
-        if (config.contains(INDEX_FILE_SLICE_SIZE_IN_MEGABYTE)) {
-            Disassemble(config[INDEX_FILE_SLICE_SIZE_IN_MEGABYTE].get<int64_t>() * 1024 * 1024, res_set);
-        }
+        Disassemble(res_set, config);
         return res_set;
     } catch (std::exception& e) {
         KNOWHERE_THROW_MSG(e.what());
@@ -102,4 +99,3 @@ IndexRHNSWPQ::UpdateIndexSize() {
 }
 
 }  // namespace knowhere
-}  // namespace milvus

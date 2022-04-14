@@ -16,10 +16,9 @@
 
 #include <faiss/Index.h>
 
-#include "common/BinarySet.h"
-#include "index/IndexType.h"
+#include "knowhere/common/BinarySet.h"
+#include "knowhere/index/IndexType.h"
 
-namespace milvus {
 namespace knowhere {
 
 class OffsetBaseIndex {
@@ -42,4 +41,3 @@ class OffsetBaseIndex {
 };
 
 }  // namespace knowhere
-}  // namespace milvus

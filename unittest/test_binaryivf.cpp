@@ -34,12 +34,12 @@ class BinaryIVFTest : public DataGen, public TestWithParam<std::string> {
         //        nq = 1000;
         //        k = 1000;
         //        Generate(DIM, NB, NQ);
-        index_ = std::make_shared<milvus::knowhere::BinaryIVF>();
+        index_ = std::make_shared<knowhere::BinaryIVF>();
 
-        milvus::knowhere::Config temp_conf{
-            {milvus::knowhere::meta::DIM, dim},           {milvus::knowhere::meta::TOPK, k},
-            {milvus::knowhere::IndexParams::nlist, 100},  {milvus::knowhere::IndexParams::nprobe, 10},
-            {milvus::knowhere::Metric::TYPE, MetricType},
+        knowhere::Config temp_conf{
+            {knowhere::meta::DIM, dim},           {knowhere::meta::TOPK, k},
+            {knowhere::IndexParams::nlist, 100},  {knowhere::IndexParams::nprobe, 10},
+            {knowhere::Metric::TYPE, MetricType},
         };
         conf = temp_conf;
     }
@@ -50,8 +50,8 @@ class BinaryIVFTest : public DataGen, public TestWithParam<std::string> {
 
  protected:
     std::string index_type;
-    milvus::knowhere::Config conf;
-    milvus::knowhere::BinaryIVFIndexPtr index_ = nullptr;
+    knowhere::Config conf;
+    knowhere::BinaryIVFIndexPtr index_ = nullptr;
 };
 
 INSTANTIATE_TEST_CASE_P(METRICParameters,
@@ -73,15 +73,15 @@ TEST_P(BinaryIVFTest, binaryivf_basic) {
     EXPECT_EQ(index_->Dim(), dim);
 
     auto result = index_->Query(query_dataset, conf, nullptr);
-    AssertAnns(result, nq, conf[milvus::knowhere::meta::TOPK]);
+    AssertAnns(result, nq, conf[knowhere::meta::TOPK]);
     // PrintResult(result, nq, k);
 
-    faiss::ConcurrentBitsetPtr concurrent_bitset_ptr = std::make_shared<faiss::ConcurrentBitset>(nb);
+    std::shared_ptr<uint8_t[]> data(new uint8_t[nb/8]);
     for (int64_t i = 0; i < nq; ++i) {
-        concurrent_bitset_ptr->set(i);
+        set_bit(data.get(), i);
     }
-
-    auto result2 = index_->Query(query_dataset, conf, concurrent_bitset_ptr);
+    auto bitset = faiss::BitsetView(data.get(), nb);
+    auto result2 = index_->Query(query_dataset, conf, bitset);
     AssertAnns(result2, nq, k, CheckMode::CHECK_NOT_EQUAL);
 
 #if 0
@@ -94,9 +94,11 @@ TEST_P(BinaryIVFTest, binaryivf_basic) {
 }
 
 TEST_P(BinaryIVFTest, binaryivf_serialize) {
-    auto serialize = [](const std::string& filename, milvus::knowhere::BinaryPtr& bin, uint8_t* ret) {
-        FileIOWriter writer(filename);
-        writer(static_cast<void*>(bin->data.get()), bin->size);
+    auto serialize = [](const std::string& filename, knowhere::BinaryPtr& bin, uint8_t* ret) {
+        {
+            FileIOWriter writer(filename);
+            writer(static_cast<void*>(bin->data.get()), bin->size);
+        }
 
         FileIOReader reader(filename);
         reader(ret, bin->size);
@@ -108,7 +110,7 @@ TEST_P(BinaryIVFTest, binaryivf_serialize) {
     //     auto binaryset = model->Serialize();
     //     auto bin = binaryset.GetByName("BinaryIVF");
     //
-    //     std::string filename = "/tmp/binaryivf_test_model_serialize.bin";
+    //     std::string filename = temp_path("/tmp/binaryivf_test_model_serialize.bin");
     //     auto load_data = new uint8_t[bin->size];
     //     serialize(filename, bin, load_data);
     //
@@ -122,7 +124,7 @@ TEST_P(BinaryIVFTest, binaryivf_serialize) {
     //     index_->set_index_model(model);
     //     index_->Add(base_dataset, conf);
     //     auto result = index_->Query(query_dataset, conf);
-    //     AssertAnns(result, nq, conf[milvus::knowhere::meta::TOPK]);
+    //     AssertAnns(result, nq, conf[knowhere::meta::TOPK]);
     // }
 
     {
@@ -133,7 +135,7 @@ TEST_P(BinaryIVFTest, binaryivf_serialize) {
         auto binaryset = index_->Serialize(conf);
         auto bin = binaryset.GetByName("BinaryIVF");
 
-        std::string filename = "/tmp/binaryivf_test_serialize.bin";
+        std::string filename = temp_path("/tmp/binaryivf_test_serialize.bin");
         auto load_data = new uint8_t[bin->size];
         serialize(filename, bin, load_data);
 
@@ -145,7 +147,7 @@ TEST_P(BinaryIVFTest, binaryivf_serialize) {
         EXPECT_EQ(index_->Count(), nb);
         EXPECT_EQ(index_->Dim(), dim);
         auto result = index_->Query(query_dataset, conf, nullptr);
-        AssertAnns(result, nq, conf[milvus::knowhere::meta::TOPK]);
+        AssertAnns(result, nq, conf[knowhere::meta::TOPK]);
         // PrintResult(result, nq, k);
     }
 }
@@ -160,7 +162,7 @@ TEST_P(BinaryIVFTest, binaryivf_slice) {
         EXPECT_EQ(index_->Count(), nb);
         EXPECT_EQ(index_->Dim(), dim);
         auto result = index_->Query(query_dataset, conf, nullptr);
-        AssertAnns(result, nq, conf[milvus::knowhere::meta::TOPK]);
+        AssertAnns(result, nq, conf[knowhere::meta::TOPK]);
         // PrintResult(result, nq, k);
     }
 }

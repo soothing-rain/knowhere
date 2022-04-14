@@ -17,16 +17,14 @@
 #include <string>
 #include <vector>
 
+#include "knowhere/archive/KnowhereConfig.h"
 #include "knowhere/common/Dataset.h"
 #include "knowhere/common/Log.h"
-#include "faiss/FaissHook.h"
 
 class DataGen {
  public:
     DataGen() {
-        std::string cpu_flag;
-        faiss::hook_init(cpu_flag);
-        std::cout << cpu_flag << std::endl;
+        knowhere::KnowhereConfig::SetSimdType(knowhere::KnowhereConfig::SimdType::AUTO);
     }
 
  protected:
@@ -49,10 +47,10 @@ class DataGen {
     std::vector<uint8_t> xq_bin;
     std::vector<int64_t> ids;
     std::vector<int64_t> xids;
-    milvus::knowhere::DatasetPtr base_dataset = nullptr;
-    milvus::knowhere::DatasetPtr query_dataset = nullptr;
-    milvus::knowhere::DatasetPtr id_dataset = nullptr;
-    milvus::knowhere::DatasetPtr xid_dataset = nullptr;
+    knowhere::DatasetPtr base_dataset = nullptr;
+    knowhere::DatasetPtr query_dataset = nullptr;
+    knowhere::DatasetPtr id_dataset = nullptr;
+    knowhere::DatasetPtr xid_dataset = nullptr;
 };
 
 extern void
@@ -83,9 +81,6 @@ GenBase(const int64_t dim,
         int64_t* xids,
         const bool is_binary);
 
-extern void
-InitLog();
-
 enum class CheckMode {
     CHECK_EQUAL = 0,
     CHECK_NOT_EQUAL = 1,
@@ -93,51 +88,76 @@ enum class CheckMode {
 };
 
 void
-AssertAnns(const milvus::knowhere::DatasetPtr& result,
+AssertAnns(const knowhere::DatasetPtr& result,
            const int nq,
            const int k,
            const CheckMode check_mode = CheckMode::CHECK_EQUAL);
 
 void
-AssertVec(const milvus::knowhere::DatasetPtr& result,
-          const milvus::knowhere::DatasetPtr& base_dataset,
-          const milvus::knowhere::DatasetPtr& id_dataset,
+AssertVec(const knowhere::DatasetPtr& result,
+          const knowhere::DatasetPtr& base_dataset,
+          const knowhere::DatasetPtr& id_dataset,
           const int n,
           const int dim,
           const CheckMode check_mode = CheckMode::CHECK_EQUAL);
 
 void
-AssertBinVec(const milvus::knowhere::DatasetPtr& result,
-             const milvus::knowhere::DatasetPtr& base_dataset,
-             const milvus::knowhere::DatasetPtr& id_dataset,
+AssertBinVec(const knowhere::DatasetPtr& result,
+             const knowhere::DatasetPtr& base_dataset,
+             const knowhere::DatasetPtr& id_dataset,
              const int n,
              const int dim,
              const CheckMode check_mode = CheckMode::CHECK_EQUAL);
 
 void
-PrintResult(const milvus::knowhere::DatasetPtr& result, const int& nq, const int& k);
+PrintResult(const knowhere::DatasetPtr& result, const int& nq, const int& k);
 
 void
-ReleaseQueryResult(const milvus::knowhere::DatasetPtr& result);
+ReleaseQueryResult(const knowhere::DatasetPtr& result);
 
 struct FileIOWriter {
     std::fstream fs;
     std::string name;
 
-    explicit FileIOWriter(const std::string& fname);
-    ~FileIOWriter();
-    size_t
-    operator()(void* ptr, size_t size);
+    explicit FileIOWriter(const std::string& fname) {
+        name = fname;
+        fs = std::fstream(name, std::ios::out | std::ios::binary);
+    }
+
+    ~FileIOWriter() {
+        fs.close();
+    }
+
+    size_t operator()(void* ptr, size_t size) {
+        fs.write(reinterpret_cast<char*>(ptr), size);
+        return size;
+    }
 };
 
 struct FileIOReader {
     std::fstream fs;
     std::string name;
 
-    explicit FileIOReader(const std::string& fname);
-    ~FileIOReader();
-    size_t
-    operator()(void* ptr, size_t size);
+    explicit FileIOReader(const std::string& fname) {
+        name = fname;
+        fs = std::fstream(name, std::ios::in | std::ios::binary);
+    }
+
+    ~FileIOReader() {
+        fs.close();
+    }
+
+    size_t operator()(void* ptr, size_t size) {
+        fs.read(reinterpret_cast<char*>(ptr), size);
+        return size;
+    }
+
+    size_t size() {
+        fs.seekg(0, fs.end);
+        size_t len = fs.tellg();
+        fs.seekg(0, fs.beg);
+        return len;
+    }
 };
 
 void
@@ -148,3 +168,29 @@ fvecs_read(const char* fname, size_t* d_out, size_t* n_out);
 
 int*
 ivecs_read(const char* fname, size_t* d_out, size_t* n_out);
+
+inline void
+set_bit(uint8_t* data, size_t idx) {
+    data[idx >> 3] |= 0x1 << (idx & 0x7);
+}
+
+inline void
+clear_bit(uint8_t* data, size_t idx) {
+    data[idx >> 3] &= ~(0x1 << (idx & 0x7));
+}
+
+std::string
+temp_path(const char* path);
+
+#ifdef __MINGW64__
+
+uint32_t
+lrand48();
+
+float
+drand48();
+
+int64_t
+random();
+
+#endif

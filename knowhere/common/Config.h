@@ -11,12 +11,24 @@
 
 #pragma once
 
-#include "Json.h"
+#include "nlohmann/json.hpp"
 
-namespace milvus {
 namespace knowhere {
 
-using Config = milvus::json;
+using Config = nlohmann::json;
+
+#define JSON_NULL_CHECK(json)                                       \
+    do {                                                            \
+        if (json.empty()) {                                         \
+            return Status{SERVER_INVALID_ARGUMENT, "Json is null"}; \
+        }                                                           \
+    } while (false)
+
+#define JSON_OBJECT_CHECK(json)                                                  \
+    do {                                                                         \
+        if (!json.is_object()) {                                                 \
+            return Status{SERVER_INVALID_ARGUMENT, "Json is not a json object"}; \
+        }                                                                        \
+    } while (false)
 
 }  // namespace knowhere
-}  // namespace milvus

@@ -29,20 +29,6 @@ else()
     set( THIRDPARTY_DOWNLOAD_PATH ${CMAKE_BINARY_DIR}/3rdparty_download/download )
 endif()
 message( STATUS "Thirdparty downloaded file path: ${THIRDPARTY_DOWNLOAD_PATH}" )
-# ----------------------------------------------------------------------
-# assume built-in pthreads on MacOS
-if ( MACOS )
-    set( CMAKE_THREAD_LIBS_INIT "-lpthread" )
-    set( CMAKE_HAVE_THREADS_LIBRARY 1 )
-    set( CMAKE_USE_WIN32_THREADS_INIT 0 )
-    set( CMAKE_USE_PTHREADS_INIT 1 )
-    set( THREADS_PREFER_PTHREAD_FLAG ON )
-endif()
-
-# Find pthreads
-set( THREADS_PREFER_PTHREAD_FLAG ON )
-find_package( Threads REQUIRED )
-
 
 # ****************************** Thirdparty googletest ***************************************
 if ( KNOWHERE_BUILD_TESTS )
@@ -55,8 +41,12 @@ if ( KNOWHERE_BUILD_TESTS )
     endif()
 endif()
 
+if ( LINUX AND ENABLE_PROFILING )
+    add_subdirectory( profiler )
+endif()
+
 # ****************************** Thirdparty NGT ***************************************
-if ( LINUX )
+if ( LINUX AND KNOWHERE_SUPPORT_NGT )
     add_subdirectory( NGT )
 endif()
 
@@ -65,32 +55,36 @@ set( FAISS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/faiss )
 
 macro(build_faiss)
     message( STATUS "Building FAISS-${FAISS_VERSION} from source" )
-    set( FAISS_PREFIX "${KNOWHERE_BINARY_DIR}/thirdparty/faiss_ep-prefix" )
+    set( FAISS_PREFIX "${CMAKE_INSTALL_PREFIX}" )
     set( FAISS_INCLUDE_DIR "${FAISS_PREFIX}/include" )
     set( FAISS_STATIC_LIB
-            "${FAISS_PREFIX}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}faiss${CMAKE_STATIC_LIBRARY_SUFFIX}" )
+            "${FAISS_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}faiss${CMAKE_STATIC_LIBRARY_SUFFIX}" )
 
-    if ( CCACHE_FOUND )
-        set( FAISS_C_COMPILER "${CCACHE_FOUND} ${CMAKE_C_COMPILER}" )
-        if ( KNOWHERE_GPU_VERSION )
-            set( FAISS_CXX_COMPILER "${CMAKE_CXX_COMPILER}" )
-            set( FAISS_CUDA_COMPILER "${CCACHE_FOUND} ${CMAKE_CUDA_COMPILER}" )
-        else ()
-            set( FAISS_CXX_COMPILER "${CCACHE_FOUND} ${CMAKE_CXX_COMPILER}" )
-        endif()
+    if ( MACOS )
+        # MACOS always report this error when build google test in faiss unittest:
+        # clang-13: error: argument unused during compilation: '-L/usr/local/opt/libomp/lib' [-Werror,-Wunused-command-line-argument]
+        # so disable faiss_test for MACOS
+        set ( ENABLE_FAISS_UNIT_TEST OFF )
     else ()
-        set( FAISS_C_COMPILER "${CMAKE_C_COMPILER}" )
-        set( FAISS_CXX_COMPILER "${CMAKE_CXX_COMPILER}" )
+        set ( ENABLE_FAISS_UNIT_TEST ${BUILD_UNIT_TEST} )
     endif ()
 
-    set( FAISS_CONFIGURE_ARGS
-            "--prefix=${FAISS_PREFIX}"
-            "CC=${FAISS_C_COMPILER}"
-            "CXX=${FAISS_CXX_COMPILER}"
-            "NVCC=${FAISS_CUDA_COMPILER}"
-            "CFLAGS=${EP_C_FLAGS}"
-            "CXXFLAGS=${EP_CXX_FLAGS} -msse4.2 -O3 -fpermissive -I ${KNOWHERE_SOURCE_DIR}"
-            --without-python )
+    # header only mman-win32 for MSYS
+    if (MSYS)
+	set(MMAN_INCLUDE_FLAGS "-I ${KNOWHERE_THIRDPARTY_SRC}/mman-win32")
+    endif ()
+
+
+    set( FAISS_CMAKE_ARGS
+            "-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}"
+            "-DCMAKE_BUILD_TYPE=Release"
+            "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+            "-DCMAKE_CUDA_COMPILER=${CMAKE_CUDA_COMPILER}"
+	    "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -fpermissive -I ${KNOWHERE_SOURCE_DIR} ${MMAN_INCLUDE_FLAGS}"
+            "-DFAISS_ENABLE_PYTHON=OFF"
+            "-DFAISS_ENABLE_GPU=OFF"
+            "-DBUILD_TESTING=${ENABLE_FAISS_UNIT_TEST}"
+            )
 
     message( STATUS "${FAISS_CONFIGURE_ARGS}" )
 
@@ -114,51 +108,25 @@ macro(build_faiss)
         endif ()
     else ()
         set( FAISS_CONFIGURE_ARGS ${FAISS_CONFIGURE_ARGS}
-                 "CPPFLAGS=-DUSE_CPU"
                  --without-cuda )
     endif ()
 
     message( STATUS "Building FAISS with configure args -${FAISS_CONFIGURE_ARGS}" )
 
     #Notice: there will not set LDFLAGS value
-    if ( DEFINED ENV{FAISS_SOURCE_URL} )
-        set( FAISS_SOURCE_URL "$ENV{FAISS_SOURCE_URL}" )
-        externalproject_add( faiss_ep
-                URL
-                ${FAISS_SOURCE_URL}
-                ${EP_LOG_OPTIONS}
-                CONFIGURE_COMMAND
-                "./configure"
-                ${FAISS_CONFIGURE_ARGS}
-                BUILD_COMMAND
-                ${MAKE} ${MAKE_BUILD_ARGS} all
-                BUILD_IN_SOURCE
-                1
-                INSTALL_COMMAND
-                ${MAKE} install
-                BUILD_BYPRODUCTS
-                ${FAISS_STATIC_LIB} )
-    else ()
-        externalproject_add( faiss_ep
-                DOWNLOAD_COMMAND
-                ""
-                SOURCE_DIR
-                ${FAISS_SOURCE_DIR}
-                ${EP_LOG_OPTIONS}
-                CONFIGURE_COMMAND
-                "./configure"
-                ${FAISS_CONFIGURE_ARGS}
-                BUILD_COMMAND
-                ${MAKE} ${MAKE_BUILD_ARGS} all
-                BUILD_IN_SOURCE
-                1
-                INSTALL_COMMAND
-                ${MAKE} install
-                BUILD_BYPRODUCTS
-                ${FAISS_STATIC_LIB} )
-    endif ()
-
-    ExternalProject_Add_StepDependencies( faiss_ep configure knowhere_utils )
+    externalproject_add( faiss_ep
+            SOURCE_DIR
+            ${FAISS_SOURCE_DIR}
+            ${EP_LOG_OPTIONS}
+            CMAKE_ARGS ${FAISS_CMAKE_ARGS}
+            BUILD_COMMAND
+            ${MAKE} ${MAKE_BUILD_ARGS} all
+            BUILD_IN_SOURCE
+            1
+            INSTALL_COMMAND
+            ${MAKE} install
+            BUILD_BYPRODUCTS
+            ${FAISS_STATIC_LIB} )
 
     if ( NOT BLAS_FOUND )
         message( STATUS "OpenBLAS BOUNDED" )
@@ -179,48 +147,48 @@ macro(build_faiss)
 
 endmacro()
 
-if ( LINUX )
-    if ( KNOWHERE_WITH_FAISS AND NOT TARGET faiss_ep )
-        if ( FAISS_SOURCE STREQUAL "AUTO" )
-            # find_package(FAISS MODULE)
-            if ( NOT FAISS_FOUND )
-                build_faiss()
-            endif ()
-        elseif ( FAISS_SOURCE STREQUAL "BUNDLED")
+if ( KNOWHERE_WITH_FAISS AND NOT TARGET faiss_ep )
+    if ( FAISS_SOURCE STREQUAL "AUTO" )
+        # find_package(FAISS MODULE)
+        if ( NOT FAISS_FOUND )
             build_faiss()
-        elseif ( FAISS_SOURCE STREQUAL "SYSTEM" )
-            find_package( FAISS REQUIRED )
         endif ()
-
-        get_target_property( FAISS_INCLUDE_DIR faiss INTERFACE_INCLUDE_DIRECTORIES )
-        include_directories( SYSTEM "${FAISS_INCLUDE_DIR}" )
-        link_directories( SYSTEM ${FAISS_PREFIX}/lib/ )
+    elseif ( FAISS_SOURCE STREQUAL "BUNDLED")
+        build_faiss()
+    elseif ( FAISS_SOURCE STREQUAL "SYSTEM" )
+        find_package( FAISS REQUIRED )
     endif ()
 
-    install(DIRECTORY "${KNOWHERE_SOURCE_DIR}/thirdparty/annoy/"
-            DESTINATION "include/annoy"
-            FILES_MATCHING
-            PATTERN "*.h"
-            )
+    get_target_property( FAISS_INCLUDE_DIR faiss INTERFACE_INCLUDE_DIRECTORIES )
+    include_directories( SYSTEM "${FAISS_INCLUDE_DIR}" )
+    link_directories( SYSTEM ${FAISS_PREFIX}/${CMAKE_INSTALL_LIBDIR}/ )
+endif ()
 
-    install(DIRECTORY "${KNOWHERE_SOURCE_DIR}/thirdparty/faiss/"
-            DESTINATION "include/faiss"
-            FILES_MATCHING
-            PATTERN "*.h"
-            )
+install(DIRECTORY "${KNOWHERE_SOURCE_DIR}/thirdparty/annoy/"
+        DESTINATION "include/annoy"
+        FILES_MATCHING
+        PATTERN "*.h"
+        )
 
-    install(DIRECTORY "${KNOWHERE_SOURCE_DIR}/thirdparty/hnswlib/"
-            DESTINATION "include/hnswlib"
-            FILES_MATCHING
-            PATTERN "*.h"
-            )
+install(DIRECTORY "${KNOWHERE_SOURCE_DIR}/thirdparty/faiss/"
+        DESTINATION "include/faiss"
+        FILES_MATCHING
+        PATTERN "*.h"
+        )
 
+install(DIRECTORY "${KNOWHERE_SOURCE_DIR}/thirdparty/hnswlib/"
+        DESTINATION "include/hnswlib"
+        FILES_MATCHING
+        PATTERN "*.h"
+        )
+
+if (KNOWHERE_SUPPORT_NGT)
     install(DIRECTORY "${KNOWHERE_SOURCE_DIR}/thirdparty/NGT/lib/NGT/"
             DESTINATION "include/NGT"
             FILES_MATCHING
             PATTERN "*.h"
             )
-endif ()
+endif()
 
 install(DIRECTORY "${KNOWHERE_SOURCE_DIR}/thirdparty/easyloggingpp/"
         DESTINATION "include/easyloggingpp"

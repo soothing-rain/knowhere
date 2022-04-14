@@ -31,7 +31,6 @@
 #include "index/vector_index/helpers/FaissGpuResourceMgr.h"
 #endif
 
-namespace milvus {
 namespace knowhere {
 
 BinarySet
@@ -41,9 +40,7 @@ IDMAP::Serialize(const Config& config) {
     }
 
     auto ret = SerializeImpl(index_type_);
-    if (config.contains(INDEX_FILE_SLICE_SIZE_IN_MEGABYTE)) {
-        Disassemble(config[INDEX_FILE_SLICE_SIZE_IN_MEGABYTE].get<int64_t>() * 1024 * 1024, ret);
-    }
+    Disassemble(ret, config);
     return ret;
 }
 
@@ -98,8 +95,8 @@ IDMAP::Query(const DatasetPtr& dataset_ptr, const Config& config, const faiss::B
 }
 
 DynamicResultSegment
-IDMAP::QueryByDistance(const milvus::knowhere::DatasetPtr& dataset,
-                       const milvus::knowhere::Config& config,
+IDMAP::QueryByDistance(const DatasetPtr& dataset,
+                       const Config& config,
                        const faiss::BitsetView bitset) {
     if (!index_) {
         KNOWHERE_THROW_MSG("index not initialize");
@@ -171,7 +168,7 @@ const float*
 IDMAP::GetRawVectors() {
     try {
         auto flat_index = dynamic_cast<faiss::IndexFlat*>(index_.get());
-        return flat_index->xb.data();
+        return reinterpret_cast<const float*>(flat_index->codes.data());
     } catch (std::exception& e) {
         KNOWHERE_THROW_MSG(e.what());
     }
@@ -191,4 +188,3 @@ IDMAP::QueryImpl(int64_t n,
 }
 
 }  // namespace knowhere
-}  // namespace milvus

@@ -15,18 +15,9 @@
 #include <gtest/gtest.h>
 #include <math.h>
 #include <memory>
+#include <random>
 #include <string>
 #include <utility>
-
-INITIALIZE_EASYLOGGINGPP
-
-void
-InitLog() {
-    el::Configurations defaultConf;
-    defaultConf.setToDefault();
-    defaultConf.set(el::Level::Debug, el::ConfigurationType::Format, "[%thread-%datetime-%level]: %msg (%fbase:%line)");
-    el::Loggers::reconfigureLogger("default", defaultConf);
-}
 
 void
 DataGen::Init_with_default(const bool is_binary) {
@@ -44,20 +35,20 @@ DataGen::Generate(const int dim, const int nb, const int nq, const bool is_binar
         assert(xb.size() == (size_t)dim * nb);
         assert(xq.size() == (size_t)dim * nq);
 
-        base_dataset = milvus::knowhere::GenDataset(nb, dim, xb.data());
-        query_dataset = milvus::knowhere::GenDataset(nq, dim, xq.data());
+        base_dataset = knowhere::GenDataset(nb, dim, xb.data());
+        query_dataset = knowhere::GenDataset(nq, dim, xq.data());
     } else {
         int64_t dim_x = dim / 8;
         GenAll(dim_x, nb, xb_bin, ids, xids, nq, xq_bin);
         assert(xb_bin.size() == (size_t)dim_x * nb);
         assert(xq_bin.size() == (size_t)dim_x * nq);
 
-        base_dataset = milvus::knowhere::GenDataset(nb, dim, xb_bin.data());
-        query_dataset = milvus::knowhere::GenDataset(nq, dim, xq_bin.data());
+        base_dataset = knowhere::GenDataset(nb, dim, xb_bin.data());
+        query_dataset = knowhere::GenDataset(nq, dim, xq_bin.data());
     }
 
-    id_dataset = milvus::knowhere::GenDataset(nq, dim, nullptr);
-    xid_dataset = milvus::knowhere::GenDataset(nq, dim, nullptr);
+    id_dataset = knowhere::GenDataset(nq, dim, nullptr);
+    xid_dataset = knowhere::GenDataset(nq, dim, nullptr);
 }
 
 void
@@ -129,39 +120,9 @@ GenBase(const int64_t dim,
     xids[0] = 3;  // pseudo random
 }
 
-FileIOReader::FileIOReader(const std::string& fname) {
-    name = fname;
-    fs = std::fstream(name, std::ios::in | std::ios::binary);
-}
-
-FileIOReader::~FileIOReader() {
-    fs.close();
-}
-
-size_t
-FileIOReader::operator()(void* ptr, size_t size) {
-    fs.read(reinterpret_cast<char*>(ptr), size);
-    return size;
-}
-
-FileIOWriter::FileIOWriter(const std::string& fname) {
-    name = fname;
-    fs = std::fstream(name, std::ios::out | std::ios::binary);
-}
-
-FileIOWriter::~FileIOWriter() {
-    fs.close();
-}
-
-size_t
-FileIOWriter::operator()(void* ptr, size_t size) {
-    fs.write(reinterpret_cast<char*>(ptr), size);
-    return size;
-}
-
 void
-AssertAnns(const milvus::knowhere::DatasetPtr& result, const int nq, const int k, const CheckMode check_mode) {
-    auto ids = result->Get<int64_t*>(milvus::knowhere::meta::IDS);
+AssertAnns(const knowhere::DatasetPtr& result, const int nq, const int k, const CheckMode check_mode) {
+    auto ids = result->Get<int64_t*>(knowhere::meta::IDS);
     for (auto i = 0; i < nq; i++) {
         switch (check_mode) {
             case CheckMode::CHECK_EQUAL:
@@ -179,11 +140,11 @@ AssertAnns(const milvus::knowhere::DatasetPtr& result, const int nq, const int k
 
 #if 0
 void
-AssertVec(const milvus::knowhere::DatasetPtr& result, const milvus::knowhere::DatasetPtr& base_dataset,
-          const milvus::knowhere::DatasetPtr& id_dataset, const int n, const int dim, const CheckMode check_mode) {
-    float* base = (float*)base_dataset->Get<const void*>(milvus::knowhere::meta::TENSOR);
-    auto ids = id_dataset->Get<const int64_t*>(milvus::knowhere::meta::IDS);
-    auto x = result->Get<float*>(milvus::knowhere::meta::TENSOR);
+AssertVec(const knowhere::DatasetPtr& result, const knowhere::DatasetPtr& base_dataset,
+          const knowhere::DatasetPtr& id_dataset, const int n, const int dim, const CheckMode check_mode) {
+    float* base = (float*)base_dataset->Get<const void*>(knowhere::meta::TENSOR);
+    auto ids = id_dataset->Get<const int64_t*>(knowhere::meta::IDS);
+    auto x = result->Get<float*>(knowhere::meta::TENSOR);
     for (auto i = 0; i < n; i++) {
         auto id = ids[i];
         for (auto j = 0; j < dim; j++) {
@@ -211,11 +172,11 @@ AssertVec(const milvus::knowhere::DatasetPtr& result, const milvus::knowhere::Da
 }
 
 void
-AssertBinVec(const milvus::knowhere::DatasetPtr& result, const milvus::knowhere::DatasetPtr& base_dataset,
-             const milvus::knowhere::DatasetPtr& id_dataset, const int n, const int dim, const CheckMode check_mode) {
-    auto base = (uint8_t*)base_dataset->Get<const void*>(milvus::knowhere::meta::TENSOR);
-    auto ids = id_dataset->Get<const int64_t*>(milvus::knowhere::meta::IDS);
-    auto x = result->Get<float*>(milvus::knowhere::meta::TENSOR);
+AssertBinVec(const knowhere::DatasetPtr& result, const knowhere::DatasetPtr& base_dataset,
+             const knowhere::DatasetPtr& id_dataset, const int n, const int dim, const CheckMode check_mode) {
+    auto base = (uint8_t*)base_dataset->Get<const void*>(knowhere::meta::TENSOR);
+    auto ids = id_dataset->Get<const int64_t*>(knowhere::meta::IDS);
+    auto x = result->Get<float*>(knowhere::meta::TENSOR);
     for (auto i = 0; i < 1; i++) {
         auto id = ids[i];
         for (auto j = 0; j < dim; j++) {
@@ -226,9 +187,9 @@ AssertBinVec(const milvus::knowhere::DatasetPtr& result, const milvus::knowhere:
 #endif
 
 void
-PrintResult(const milvus::knowhere::DatasetPtr& result, const int& nq, const int& k) {
-    auto ids = result->Get<int64_t*>(milvus::knowhere::meta::IDS);
-    auto dist = result->Get<float*>(milvus::knowhere::meta::DISTANCE);
+PrintResult(const knowhere::DatasetPtr& result, const int& nq, const int& k) {
+    auto ids = result->Get<int64_t*>(knowhere::meta::IDS);
+    auto dist = result->Get<float*>(knowhere::meta::DISTANCE);
 
     std::stringstream ss_id;
     std::stringstream ss_dist;
@@ -247,11 +208,11 @@ PrintResult(const milvus::knowhere::DatasetPtr& result, const int& nq, const int
 }
 
 void
-ReleaseQueryResult(const milvus::knowhere::DatasetPtr& result) {
-    float* res_dist = result->Get<float*>(milvus::knowhere::meta::DISTANCE);
+ReleaseQueryResult(const knowhere::DatasetPtr& result) {
+    float* res_dist = result->Get<float*>(knowhere::meta::DISTANCE);
     free(res_dist);
 
-    int64_t* res_ids = result->Get<int64_t*>(milvus::knowhere::meta::IDS);
+    int64_t* res_ids = result->Get<int64_t*>(knowhere::meta::IDS);
     free(res_ids);
 }
 
@@ -325,4 +286,43 @@ int*  // not very clean, but works as long as sizeof(int) == sizeof(float)
 ivecs_read(const char* fname, size_t* d_out, size_t* n_out) {
     return (int*)fvecs_read(fname, d_out, n_out);
 }
+#endif
+
+// path like /tmp may not work for windows
+std::string
+temp_path(const char* path)
+{
+    std::string new_path{path};
+#ifdef WIN32
+    for (auto &ch : new_path) {
+        if (ch == '/') {
+            ch = '_';
+        }
+    }
+    new_path = std::string("tmp/") + new_path;
+    mkdir("tmp/");
+#endif
+    return new_path;
+}
+
+#ifdef __MINGW64__
+
+static std::random_device rd;
+static std::mt19937 gen(rd());
+
+uint32_t lrand48 () {
+    std::uniform_int_distribution<uint32_t> distrib(0, (1 << 31));
+    return distrib(gen);
+}
+
+float drand48 () {
+    std::uniform_real_distribution<float> distrib(0.0, 1.0);
+    return distrib(gen);
+}
+
+int64_t random() {
+    std::uniform_int_distribution<int64_t> distrib(0, (1LL << 63));
+    return distrib(gen);
+}
+
 #endif

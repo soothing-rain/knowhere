@@ -12,9 +12,8 @@
 #pragma once
 
 #include <string>
-#include "common/MetricType.h"
+#include "knowhere/common/MetricType.h"
 
-namespace milvus {
 namespace knowhere {
 
 namespace meta {
@@ -84,4 +83,3 @@ extern faiss::MetricType
 GetMetricType(const std::string& type);
 
 }  // namespace knowhere
-}  // namespace milvus

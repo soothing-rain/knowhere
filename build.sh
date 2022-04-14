@@ -13,10 +13,11 @@ case "${UNAME}" in
     *)          MACHINE="UNKNOWN:${UNAME}"
 esac
 
-BUILD_OUTPUT_DIR="cmake_build"
+BUILD_DIR="cmake_build"
+OUTPUT_DIR="output"
 BUILD_TYPE="Debug"
 BUILD_UNITTEST="OFF"
-INSTALL_PREFIX=$(pwd)/output
+INSTALL_PREFIX=$(pwd)/${OUTPUT_DIR}
 MAKE_CLEAN="OFF"
 BUILD_COVERAGE="OFF"
 SUPPORT_PROFILING="OFF"
@@ -68,31 +69,36 @@ usage:
 done
 
 if [[ ${MAKE_CLEAN} == "ON" ]]; then
-  echo "Remove ${BUILD_OUTPUT_DIR} ..."
-  rm -rf ${BUILD_OUTPUT_DIR}
-  echo "Running make clean in thirdparty/faiss ..."
+  echo "Remove ${BUILD_DIR} ${OUTPUT_DIR} ..."
+  rm -rf ${BUILD_DIR} ${OUTPUT_DIR}
+  echo "Clean faiss ..."
   cd thirdparty/faiss
-  make clean
+  rm -rf CMakeFiles _deps CMakeCache.txt
   exit 0
 fi
 
-if [[ ! -d ${BUILD_OUTPUT_DIR} ]]; then
-    mkdir ${BUILD_OUTPUT_DIR}
+if [[ ! -d ${BUILD_DIR} ]]; then
+    mkdir ${BUILD_DIR}
 fi
 
-cd ${BUILD_OUTPUT_DIR}
+cd ${BUILD_DIR}
 
 CMAKE_CMD="cmake -DBUILD_UNIT_TEST=${BUILD_UNITTEST} \
 -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
 -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
 -DBUILD_COVERAGE=${BUILD_COVERAGE} \
 -DCMAKE_CUDA_COMPILER=${CUDA_COMPILER} \
--DMILVUS_ENABLE_PROFILING=${SUPPORT_PROFILING} \
+-DENABLE_PROFILING=${SUPPORT_PROFILING} \
 -DKNOWHERE_GPU_VERSION=${SUPPORT_GPU} \
 ../"
 
 echo ${CMAKE_CMD}
-${CMAKE_CMD}
+if [[ "$MACHINE" == "MinGw" ]] ; then
+    # force makefile for MinGW
+    ${CMAKE_CMD} -G "MSYS Makefiles"
+else
+    ${CMAKE_CMD}
+fi
 
 if [[ ${RUN_CPPLINT} == "ON" ]]; then
   # cpplint check

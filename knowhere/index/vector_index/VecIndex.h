@@ -15,20 +15,16 @@
 #include <utility>
 #include <vector>
 
-#include "common/Dataset.h"
-#include "common/Exception.h"
-#include "common/Typedef.h"
-#include "common/Utils.h"
-#include "index/Index.h"
-#include "index/IndexType.h"
-#include "index/vector_index/Statistics.h"
-#include "utils/BitsetView.h"
+#include "knowhere/common/Dataset.h"
+#include "knowhere/common/Exception.h"
+#include "knowhere/common/Typedef.h"
+#include "knowhere/common/Utils.h"
+#include "knowhere/index/Index.h"
+#include "knowhere/index/IndexType.h"
+#include "knowhere/index/vector_index/Statistics.h"
+#include "knowhere/index/vector_index/helpers/DynamicResultSet.h"
+#include "knowhere/utils/BitsetView.h"
 
-#ifdef __linux__
-#include "index/vector_index/helpers/DynamicResultSet.h"
-#endif
-
-namespace milvus {
 namespace knowhere {
 
 #define RAW_DATA "RAW_DATA"
@@ -97,7 +93,6 @@ class VecIndex : public Index {
         }
     }
 
-#ifdef __linux__
     void
     MapUids(DynamicResultSegment& milvus_dataset) {
         if (uids_) {
@@ -114,7 +109,6 @@ class VecIndex : public Index {
             }
         }
     }
-#endif
 
     size_t
     UidsSize() {
@@ -154,4 +148,3 @@ class VecIndex : public Index {
 using VecIndexPtr = std::shared_ptr<VecIndex>;
 
 }  // namespace knowhere
-}  // namespace milvus

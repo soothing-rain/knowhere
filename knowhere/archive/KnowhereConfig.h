@@ -14,8 +14,7 @@
 #include <vector>
 #include <string>
 
-namespace milvus {
-namespace engine {
+namespace knowhere {
 
 class KnowhereConfig {
  public:
@@ -31,6 +30,12 @@ class KnowhereConfig {
 
     static std::string
     SetSimdType(const SimdType simd_type);
+
+    /**
+     * set knowhere index_file_slice_size
+     */
+    static void
+    SetIndexFileSliceSize(const int64_t size);
 
     /**
      * Set openblas threshold
@@ -64,7 +69,7 @@ class KnowhereConfig {
      * set Statistics Level [0, 3]
      */
     static void
-    SetStatisticsLevel(const int64_t stat_level);
+    SetStatisticsLevel(const int32_t stat_level);
 
     // todo: add log level?
     /**
@@ -89,5 +94,4 @@ class KnowhereConfig {
 #endif
 };
 
-}  // namespace engine
-}  // namespace milvus
+}  // namespace knowhere

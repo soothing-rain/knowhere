@@ -20,7 +20,6 @@ add_definitions( -DAUTO_INITIALIZE_EASYLOGGINGPP )
 # Note: Cross compiling arguments must be set before project annotation, when ${CMAKE_SYSTEM_NAME} is not available.
 # We have to use the "APPLE" variable here as a result.
 if ( APPLE )
-    set ( MACOS TRUE )
     set ( CMAKE_CROSSCOMPILING TRUE )
     set ( RUN_HAVE_GNU_POSIX_REGEX 0 )
     set ( CMAKE_C_COMPILER "/usr/local/opt/llvm/bin/clang" )
@@ -39,7 +38,7 @@ get_build_type( TARGET  BUILD_TYPE
 message( STATUS "Build type = ${BUILD_TYPE}" )
 
 get_knowhere_version( TARGET KNOWHERE_VERSION
-                             DEFAULT "1.0.0" )
+                             DEFAULT "1.0.1" )
 message( STATUS "Build version = ${KNOWHERE_VERSION}" )
 
 get_last_commit_id( LAST_COMMIT_ID )
@@ -64,54 +63,33 @@ set( KNOWHERE_BINARY_DIR ${PROJECT_BINARY_DIR} )
 set( KNOWHERE_THIRDPARTY_SRC ${PROJECT_SOURCE_DIR}/thirdparty )
 
 # This will set RPATH to all excutable TARGET
-# self-installed dynamic libraries will be correctly linked by excutable
-set( CMAKE_INSTALL_RPATH "/usr/lib" "${CMAKE_INSTALL_PREFIX}/lib" )
+# self-installed dynamic libraries will be correctly linked by executable
+include( GNUInstallDirs )
+set( CMAKE_INSTALL_RPATH "/usr/lib" "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" )
 set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 set( CMAKE_CUDA_COMPILER  "/usr/local/cuda/bin/nvcc" )
 include( CheckCXXCompilerFlag )
 
 if ( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" )
-    message(STATUS "==============Darwin Environment==============")
-    set( MACOS TRUE )
-    set( CMAKE_CXX_FLAGS "-L/usr/local/opt/libomp/lib -I/usr/local/opt/llvm/include -I/usr/local/include -I/usr/local/opt/openblas/include -I/usr/local/opt/libomp/include -DBOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED=1" )
-    check_cxx_compiler_flag( -std=c++11 HAS_STD_CPP11_FLAG )
-    if ( HAS_STD_CPP11_FLAG )
-        add_compile_options(-std=c++11)
-    endif ()
-    if ( CMAKE_C_COMPILER_ID MATCHES "Clang" )
-        set( OpenMP_C "${CMAKE_C_COMPILER}" CACHE STRING "" FORCE )
-        set( OpenMP_C_FLAGS "-fopenmp=libomp -Wno-unused-command-line-argument" CACHE STRING "" FORCE )
-        set( OpenMP_C_LIB_NAMES "libomp" "libgomp" "libiomp5" CACHE STRING "" FORCE )
-        set( OpenMP_libomp_LIBRARY ${OpenMP_C_LIB_NAMES} CACHE STRING "" FORCE )
-        set( OpenMP_libgomp_LIBRARY ${OpenMP_C_LIB_NAMES} CACHE STRING "" FORCE )
-        set( OpenMP_libiomp5_LIBRARY ${OpenMP_C_LIB_NAMES} CACHE STRING "" FORCE )
-    endif ()
-    if ( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
-        set( OpenMP_CXX "${CMAKE_CXX_COMPILER}" CACHE STRING "" FORCE)
-        set( OpenMP_CXX_FLAGS "-fopenmp=libomp -Wno-unused-command-line-argument" CACHE STRING "" FORCE )
-        set( OpenMP_CXX_LIB_NAMES "libomp" "libgomp" "libiomp5" CACHE STRING "" FORCE )
-        set( OpenMP_libomp_LIBRARY ${OpenMP_CXX_LIB_NAMES} CACHE STRING "" FORCE )
-        set( OpenMP_libgomp_LIBRARY ${OpenMP_CXX_LIB_NAMES} CACHE STRING "" FORCE )
-        set( OpenMP_libiomp5_LIBRARY ${OpenMP_CXX_LIB_NAMES} CACHE STRING "" FORCE )
-    endif ()
+    message(STATUS "MacOS")
+    set ( MACOS TRUE )
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L/usr/local/opt/libomp/lib" )
 elseif ( "${CMAKE_SYSTEM}" MATCHES "Linux" )
-    message( STATUS "==============Linux Environment===============" )
+    message( STATUS "Linux")
     set ( LINUX TRUE )
+elseif ( MSYS )
+    message( STATUS "==============MSYS Environment===============" )
 else ()
     message( FATAL_ERROR "Unsupported platform!" )
 endif ()
 
 
 #***************************** Dependencies ****************************
-include( GNUInstallDirs )
 include( DefineOptionsKw )
 include( BuildUtilsKw )
 include( ExternalProject )
-
-if ( LINUX )
-    include( ThirdPartyPackagesKw )
-endif ()
+include( ThirdPartyPackagesKw )
 
 using_ccache_if_defined( KNOWHERE_USE_CCACHE )
 
@@ -155,6 +133,8 @@ append_flags( CMAKE_CXX_FLAGS
 # option "-rdynamic" is to print out detailed backtrace info for debug-ease
 if ( LINUX )
     append_flags( CMAKE_CXX_FLAGS FLAGS "-Werror" "-rdynamic" )
+elseif ( MSYS )
+    append_flags( CMAKE_CXX_FLAGS FLAGS "-Werror" )
 endif ()
 
 #*********************** Coding style check tools **********************

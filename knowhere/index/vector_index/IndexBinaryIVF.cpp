@@ -20,7 +20,6 @@
 #include "index/vector_index/IndexBinaryIVF.h"
 #include "index/vector_index/adapter/VectorAdapter.h"
 
-namespace milvus {
 namespace knowhere {
 
 using stdclock = std::chrono::high_resolution_clock;
@@ -32,9 +31,7 @@ BinaryIVF::Serialize(const Config& config) {
     }
 
     auto ret = SerializeImpl(index_type_);
-    if (config.contains(INDEX_FILE_SLICE_SIZE_IN_MEGABYTE)) {
-        Disassemble(config[INDEX_FILE_SLICE_SIZE_IN_MEGABYTE].get<int64_t>() * 1024 * 1024, ret);
-    }
+    Disassemble(ret, config);
     return ret;
 }
 
@@ -42,11 +39,12 @@ void
 BinaryIVF::Load(const BinarySet& index_binary) {
     Assemble(const_cast<BinarySet&>(index_binary));
     LoadImpl(index_binary, index_type_);
-
+#if 0
     if (STATISTICS_LEVEL >= 3) {
         auto ivf_index = static_cast<faiss::IndexBinaryIVF*>(index_.get());
         ivf_index->nprobe_statistics.resize(ivf_index->nlist, 0);
     }
+#endif
 }
 
 DatasetPtr
@@ -125,6 +123,7 @@ BinaryIVF::UpdateIndexSize() {
     index_size_ = nb * code_size + nb * sizeof(int64_t) + nlist * code_size;
 }
 
+#if 0
 StatisticsPtr
 BinaryIVF::GetStatistics() {
     if (!STATISTICS_LEVEL) {
@@ -149,6 +148,7 @@ BinaryIVF::ClearStatistics() {
     auto lock = ivf_stats->Lock();
     ivf_stats->clear();
 }
+#endif
 
 void
 BinaryIVF::Train(const DatasetPtr& dataset_ptr, const Config& config) {
@@ -198,6 +198,7 @@ BinaryIVF::QueryImpl(int64_t n,
 
     index_->search(n, data, k, i_distances, labels, bitset);
 
+#if 0
     stdclock::time_point after = stdclock::now();
     double search_cost = (std::chrono::duration<double, std::micro>(after - before)).count();
     LOG_KNOWHERE_DEBUG_ << "IVF_NM search cost: " << search_cost
@@ -219,6 +220,7 @@ BinaryIVF::QueryImpl(int64_t n,
             ivf_stats->update_filter_percentage(bitset);
         }
     }
+#endif
 
     // if hamming, it need transform int32 to float
     if (ivf_index->metric_type == faiss::METRIC_Hamming) {
@@ -230,4 +232,3 @@ BinaryIVF::QueryImpl(int64_t n,
 }
 
 }  // namespace knowhere
-}  // namespace milvus

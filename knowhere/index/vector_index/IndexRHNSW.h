@@ -15,27 +15,26 @@
 #include <mutex>
 #include <utility>
 
-#include "common/Exception.h"
-#include "index/vector_index/FaissBaseIndex.h"
-#include "index/vector_index/VecIndex.h"
-#include "index/vector_index/adapter/VectorAdapter.h"
+#include "knowhere/common/Exception.h"
+#include "knowhere/index/vector_index/FaissBaseIndex.h"
+#include "knowhere/index/vector_index/VecIndex.h"
+#include "knowhere/index/vector_index/adapter/VectorAdapter.h"
 
 #include <faiss/index_io.h>
-#include "faiss/IndexRHNSW.h"
+#include <faiss/IndexRHNSW.h>
 
-namespace milvus {
 namespace knowhere {
 
 class IndexRHNSW : public VecIndex, public FaissBaseIndex {
  public:
     IndexRHNSW() : FaissBaseIndex(nullptr) {
         index_type_ = IndexEnum::INVALID;
-        stats = std::make_shared<milvus::knowhere::RHNSWStatistics>(index_type_);
+        stats = std::make_shared<RHNSWStatistics>(index_type_);
     }
 
     explicit IndexRHNSW(std::shared_ptr<faiss::Index> index) : FaissBaseIndex(std::move(index)) {
         index_type_ = IndexEnum::INVALID;
-        stats = std::make_shared<milvus::knowhere::RHNSWStatistics>(index_type_);
+        stats = std::make_shared<RHNSWStatistics>(index_type_);
     }
 
     BinarySet
@@ -62,11 +61,13 @@ class IndexRHNSW : public VecIndex, public FaissBaseIndex {
     void
     UpdateIndexSize() override;
 
+#if 0
     StatisticsPtr
     GetStatistics() override;
 
     void
     ClearStatistics() override;
+#endif
 };
+
 }  // namespace knowhere
-}  // namespace milvus

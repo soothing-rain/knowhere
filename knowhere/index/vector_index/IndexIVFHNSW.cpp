@@ -26,7 +26,6 @@
 #include "index/vector_index/helpers/FaissIO.h"
 #include "index/vector_index/helpers/IndexParameter.h"
 
-namespace milvus {
 namespace knowhere {
 
 BinarySet
@@ -49,9 +48,7 @@ IVFHNSW::Serialize(const Config& config) {
         std::shared_ptr<uint8_t[]> data(writer.data_);
         res_set.Append("HNSW_STORAGE", data, writer.rp);
 
-        if (config.contains(INDEX_FILE_SLICE_SIZE_IN_MEGABYTE)) {
-            Disassemble(config[INDEX_FILE_SLICE_SIZE_IN_MEGABYTE].get<int64_t>() * 1024 * 1024, res_set);
-        }
+        Disassemble(res_set, config);
         return res_set;
     } catch (std::exception& e) {
         KNOWHERE_THROW_MSG(e.what());
@@ -134,4 +131,3 @@ IVFHNSW::QueryImpl(int64_t n,
 }
 
 }  // namespace knowhere
-}  // namespace milvus

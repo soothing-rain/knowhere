@@ -17,7 +17,6 @@
 #include "index/vector_index/adapter/VectorAdapter.h"
 #include "index/vector_index/helpers/IndexParameter.h"
 
-namespace milvus {
 namespace knowhere {
 
 BinarySet
@@ -51,9 +50,7 @@ IndexNGT::Serialize(const Config& config) {
     res_set.Append("ngt_grp_data", grp_data, grp_size);
     res_set.Append("ngt_prf_data", prf_data, prf_size);
     res_set.Append("ngt_tre_data", tre_data, tre_size);
-    if (config.contains(INDEX_FILE_SLICE_SIZE_IN_MEGABYTE)) {
-        Disassemble(config[INDEX_FILE_SLICE_SIZE_IN_MEGABYTE].get<int64_t>() * 1024 * 1024, res_set);
-    }
+    Disassemble(res_set, config);
     return res_set;
 }
 
@@ -217,4 +214,3 @@ IndexNGT::UpdateIndexSize() {
 }
 
 }  // namespace knowhere
-}  // namespace milvus

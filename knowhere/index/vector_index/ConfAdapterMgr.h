@@ -16,10 +16,9 @@
 #include <unordered_map>
 #include <mutex>
 
-#include "index/IndexType.h"
-#include "ConfAdapter.h"
+#include "knowhere/index/IndexType.h"
+#include "knowhere/index/vector_index/ConfAdapter.h"
 
-namespace milvus {
 namespace knowhere {
 
 class AdapterMgr {
@@ -32,10 +31,7 @@ class AdapterMgr {
     };
 
     static AdapterMgr&
-    GetInstance() {
-        static AdapterMgr instance;
-        return instance;
-    }
+    GetInstance();
 
     ConfAdapterPtr
     GetAdapter(const IndexType indexType);
@@ -50,4 +46,3 @@ class AdapterMgr {
 };
 
 }  // namespace knowhere
-}  // namespace milvus
